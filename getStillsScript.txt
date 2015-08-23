@@ -1,0 +1,1 @@
+ ffmpeg -i orangeMovie.mov  -an -vf showinfo stills/%10d.png 2> stills.txt
