@@ -53,5 +53,6 @@ cv2.circle(img, (x, y), 40, (180,0,0), 3)
 
 cv2.imshow('detected color', img )
 
+
 cv2.waitKey(0)
 cv2.destroyAllWindows()
