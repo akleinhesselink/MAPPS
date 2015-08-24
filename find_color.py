@@ -21,10 +21,6 @@ mask = cv2.inRange( hsv, loColor, hiColor)
 
 cv2.imshow('test', mask )
 
-M_all  = cv2.moments(mask , 0 )
-
-area = M_all[ 'm00']
-
 contours, hierarchy  = cv2.findContours (mask, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
 
 max_area = 0
@@ -39,8 +35,6 @@ for idx, contour in enumerate(contours):
 if not largest_contour == None:
     M = cv2.moments(largest_contour)
     
-print(area, M['m00'] )
-
 x = int(M[ 'm10']/M[ 'm00'])
 y = int(M[ 'm01']/M[ 'm00'])
 
