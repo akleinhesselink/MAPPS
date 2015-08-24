@@ -1,26 +1,23 @@
 import cv2 
 import numpy as np
 
-def prepareImage( img, loColor, hiColor, blurSize ): 
-    blur_img = cv2.GaussianBlur(img, blurSize, sigmaX=0, sigmaY=0)
-    hsv = cv2.cvtColor(blur_img, cv2.COLOR_BGR2HSV) #### convert to hsv     
-    mask = cv2.inRange( hsv, loColor, hiColor)
-    return(mask)
-
 #### Define Variables: ####
 imgFile = 'tennis_balls.jpg' #### detect yellow tennis balls 
 imgFile = 'single_tennis_ball.png'
 
 loColor = (0, 70, 70) #### low yellow
 hiColor = (80, 256, 256) #### high yellow 
-smallKernal = (11, 5)
-bigKernal = (21, 10)
+
 blurSize = (15, 15)
 ###########################
 
 img = cv2.imread(imgFile)
 
-mask = prepareImage( img, loColor, hiColor, blurSize )
+blur_img = cv2.GaussianBlur(img, blurSize, sigmaX=0, sigmaY=0)
+
+hsv = cv2.cvtColor(blur_img, cv2.COLOR_BGR2HSV) #### convert to hsv
+
+mask = cv2.inRange( hsv, loColor, hiColor)
 
 cv2.imshow('test', mask )
 
@@ -52,7 +49,6 @@ print( x, y )
 cv2.circle(img, (x, y), 40, (180,0,0), 3)
 
 cv2.imshow('detected color', img )
-
 
 cv2.waitKey(0)
 cv2.destroyAllWindows()
