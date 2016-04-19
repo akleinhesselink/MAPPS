@@ -1,9 +1,14 @@
 import cv2 
 import numpy as np
+import matplotlib.mlab as mlab
+from matplotlib import pyplot as plt
 
-def maskColor( img, loColor, hiColor):     
-    mask = cv2.inRange(img, loColor, hiColor) 
-    return( mask )
+def maskColor( img, colorMasks ):     
+    mask = []
+    for colors in colorMasks:         
+        mask.append(cv2.inRange(img, colors[0], colors[1]))
+    mask = sum(mask)
+    return(mask)
 
 def cleanNoise( img, smallKernal, bigKernal):     
     ###### These steps should clean up some of smaller noise in the image 
@@ -13,43 +18,79 @@ def cleanNoise( img, smallKernal, bigKernal):
     mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, se1) #### open = erosion followed by dilation 
     return( mask )
 
-def prepareImage( img, loColor, hiColor, smallKernal, bigKernal, blurSize ): 
-    
-    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV) #### convert to hsv 
-    mask = maskColor( hsv, loColor, hiColor)
+def prepareImage( img, colorRange, smallKernal, bigKernal, blurSize ): 
+    mask = maskColor( hsv, colorRange)
     mask = cleanNoise( mask, smallKernal= smallKernal, bigKernal= bigKernal )
     mask = cv2.GaussianBlur(mask, blurSize, sigmaX=0, sigmaY=0)    
     return(mask)
 
-def checkDetection( img, circles ): 
-    
+def checkDetection( img, circles, color  ): 
+    if (img is None) : 
+        print ("no image")
+    if (circles is None): 
+        print("no circles")
+        
     for i in circles[0,:]:
-        # draw the outer circle
-        cv2.circle(img,(i[0],i[1]),i[2],(0,255,0),2)
-        # draw the center of the circle
-        cv2.circle(img,(i[0],i[1]),2,(0,0,255),3)
+        cv2.circle(img,tuple(i[0:2]),i[2],color,1)
+        cv2.circle(img,tuple(i[0:2]),2,color,1)
+    
+    centroid = np.mean(circles, axis = 1)
+    cv2.circle(img, tuple(centroid.astype(int)[0][0:2]), centroid.astype(int)[0][2], (0,0,0), 2)
+    cv2.circle(img, tuple(centroid.astype(int)[0][0:2]), 2, (0, 0, 0), 3) 
     cv2.imshow('detected circles',img)
 
 #### Define Variables: ####
 imgFile = 'tennis_balls.jpg' #### detect yellow tennis balls 
+imgFile2 = 'test_images/colors/IMG_1937.JPG'
 
-loColor = (0.11*256, 0.60*256, 0.20*256) #### low yellow
-hiColor = (0.14*256, 1.00*256, 1.00*256) #### high yellow 
-smallKernal = (11, 5)
-bigKernal = (21, 10)
-blurSize = (15, 15)
+loColor = np.array([24, 0.60*255, 0.2*255]) #### low yellow
+hiColor = np.array([38, 1.00*255, 1.00*255]) #### high yellow
+loBlue = np.array([95, 70, 150])
+hiBlue = np.array([110, 256, 256])
+loRed1 = np.array([173, 130, 150])
+hiRed1 = np.array([180, 256, 256])
+loRed2 = np.array([0, 120, 150])
+hiRed2 = np.array([7, 256, 256])
+
+redRange = [[loRed1, hiRed1], [loRed2, hiRed2]]
+blueRange = [[loBlue, hiBlue]]
+
+smallKernal = (6, 3)
+bigKernal = (11, 5)
+blurSize = (5, 5)
 ###########################
 
-img = cv2.imread(imgFile)
+colors = [ 'green', 'blue', 'red']
+maximums = [ 180, 256, 256]
+img = cv2.imread(imgFile2)
+img = cv2.resize(img, (0, 0), fx=0.25, fy=0.25) 
+hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV) #### convert to hsv 
 
-mask = prepareImage(img, loColor, hiColor, smallKernal, bigKernal, blurSize) 
+chans = cv2.split(hsv)
 
-circles = cv2.HoughCircles( mask, cv2.cv.CV_HOUGH_GRADIENT, 
-                            1, 5, param1 = 200, param2 = 30, minRadius=20, maxRadius= 200)
+#for (i , chan, color) in zip(range(len(chans)), chans, colors ) :        
+#    plt.figure(i)
+#    n, bins, patches = plt.hist(chan.ravel(), maximums[i], [0, maximums[i]], facecolor=color, alpha=0.5)
+#    plt.show()
 
-circles = np.uint16(np.around(circles))
+redMask = prepareImage(hsv, redRange, smallKernal, bigKernal, blurSize)
+blueMask = prepareImage(hsv, blueRange, smallKernal, bigKernal, blurSize)
 
-checkDetection(img, circles)
+redCircles = cv2.HoughCircles( redMask, cv2.cv.CV_HOUGH_GRADIENT, 
+                            1, 5, param1 = 100, param2 = 20, minRadius=10, maxRadius= 200)
+
+redCircles = np.uint16(np.around(redCircles))
+checkDetection(img, redCircles, color = (0,0,255))
+
+blueCircles = cv2.HoughCircles( blueMask, cv2.cv.CV_HOUGH_GRADIENT, 
+                            1, 5, param1 = 100, param2 = 20, minRadius=10, maxRadius= 200)
+
+redCircles = np.uint16(np.around(redCircles))
+checkDetection(img, blueCircles, color = (255, 0, 0))
+
+cv2.imshow('maskBlue', blueMask)
+cv2.imshow('maskRed', redMask)
 
 cv2.waitKey(0)
 cv2.destroyAllWindows()
+
