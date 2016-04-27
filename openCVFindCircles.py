@@ -35,13 +35,14 @@ def checkDetection( img, circles, color  ):
         cv2.circle(img,tuple(i[0:2]),2,color,1)
     
     centroid = np.mean(circles, axis = 1)
-    cv2.circle(img, tuple(centroid.astype(int)[0][0:2]), centroid.astype(int)[0][2], (0,0,0), 2)
-    cv2.circle(img, tuple(centroid.astype(int)[0][0:2]), 2, (0, 0, 0), 3) 
+    cv2.circle(img, tuple(centroid.astype(int)[0][0:2]), centroid.astype(int)[0][2], (0,0,0), 1)
+    cv2.circle(img, tuple(centroid.astype(int)[0][0:2]), 2, (0, 0, 0), 1) 
     cv2.imshow('detected circles',img)
 
 #### Define Variables: ####
 imgFile = 'tennis_balls.jpg' #### detect yellow tennis balls 
 imgFile2 = 'test_images/colors/IMG_1937.JPG'
+imgFile3 = 'test_images/stills/still.0330.jpg'
 
 loColor = np.array([24, 0.60*255, 0.2*255]) #### low yellow
 hiColor = np.array([38, 1.00*255, 1.00*255]) #### high yellow
@@ -62,8 +63,8 @@ blurSize = (5, 5)
 
 colors = [ 'green', 'blue', 'red']
 maximums = [ 180, 256, 256]
-img = cv2.imread(imgFile2)
-img = cv2.resize(img, (0, 0), fx=0.25, fy=0.25) 
+img = cv2.imread(imgFile3)
+#img = cv2.resize(img, (0, 0), fx=0.25, fy=0.25) 
 hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV) #### convert to hsv 
 
 chans = cv2.split(hsv)
@@ -76,21 +77,34 @@ chans = cv2.split(hsv)
 redMask = prepareImage(hsv, redRange, smallKernal, bigKernal, blurSize)
 blueMask = prepareImage(hsv, blueRange, smallKernal, bigKernal, blurSize)
 
-redCircles = cv2.HoughCircles( redMask, cv2.cv.CV_HOUGH_GRADIENT, 
-                            1, 5, param1 = 100, param2 = 20, minRadius=10, maxRadius= 200)
-
-redCircles = np.uint16(np.around(redCircles))
-checkDetection(img, redCircles, color = (0,0,255))
-
-blueCircles = cv2.HoughCircles( blueMask, cv2.cv.CV_HOUGH_GRADIENT, 
-                            1, 5, param1 = 100, param2 = 20, minRadius=10, maxRadius= 200)
-
-redCircles = np.uint16(np.around(redCircles))
-checkDetection(img, blueCircles, color = (255, 0, 0))
-
 cv2.imshow('maskBlue', blueMask)
 cv2.imshow('maskRed', redMask)
 
+blueC, hierarchy  = cv2.findContours(blueMask, 1, 2)
+redC, hierarchy  = cv2.findContours(redMask, 1, 2)
+
+blueBall = blueC[0]
+redBall = redC[0]
+
+sizeB = cv2.contourArea(blueBall)
+sizeR = cv2.contourArea(redBall)
+
+def centroid(cnt):
+    M = cv2.moments(cnt)    
+    return( np.array([int(M['m10']/M['m00']), int(M['m01']/M['m00'])]) ) 
+    
+redCtr = centroid(redBall)
+blueCtr = centroid(blueBall)
+
+cv2.drawContours(img, blueC, -1, (0,255,0), 2)
+cv2.drawContours(img, redC, -1, (0,0,255), 2)
+
+cv2.circle(img, tuple(blueCtr.astype(int)), 1, (0,255,0), 3)
+cv2.circle(img, tuple(redCtr.astype(int)), 1, (0,0,255), 3)
+
+cv2.imshow('balls', img)
+
 cv2.waitKey(0)
 cv2.destroyAllWindows()
+
 
