@@ -24,7 +24,7 @@ ret, frame = cap.read()
 fshape = frame.shape[::-1][1:3]
 
 ind = 0 
-skip = 1
+skip = 100
 
 while(cap.isOpened()):
     ind += 1
@@ -42,8 +42,7 @@ while(cap.isOpened()):
                 imgpoints.append(corners)
         
                 # Draw and display the corners
-                # cv2.drawChessboardCorners(frame, (7,6), corners, ret)
-                
+                cv2.drawChessboardCorners(frame, (7,6), corners, ret)
                 cv2.imshow('frame', frame)     
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
@@ -55,7 +54,7 @@ while(cap.isOpened()):
 cap.release()
 cv2.destroyAllWindows()
 
-ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, fshape)
+ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, fshape, None, None)
 
 # undistort a new image 
 img = cv2.imread('test_images/checkerboard/still.0984.jpg')

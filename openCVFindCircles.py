@@ -77,11 +77,11 @@ chans = cv2.split(hsv)
 redMask = prepareImage(hsv, redRange, smallKernal, bigKernal, blurSize)
 blueMask = prepareImage(hsv, blueRange, smallKernal, bigKernal, blurSize)
 
-cv2.imshow('maskBlue', blueMask)
-cv2.imshow('maskRed', redMask)
+blueMask_copy = blueMask.copy()
+redMask_copy = redMask.copy()
 
-blueC, hierarchy  = cv2.findContours(blueMask, 1, 2)
-redC, hierarchy  = cv2.findContours(redMask, 1, 2)
+im2, blueC, hierarchy = cv2.findContours(blueMask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+im2, redC, hierarchy  = cv2.findContours(redMask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
 blueBall = blueC[0]
 redBall = redC[0]
@@ -102,9 +102,19 @@ cv2.drawContours(img, redC, -1, (0,0,255), 2)
 cv2.circle(img, tuple(blueCtr.astype(int)), 1, (0,255,0), 3)
 cv2.circle(img, tuple(redCtr.astype(int)), 1, (0,0,255), 3)
 
-cv2.imshow('balls', img)
 
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+b = plt.figure()
+b.suptitle('blue')
+plt.imshow(blueMask_copy, "gray")
+r = plt.figure()
+r.suptitle('red')
+plt.imshow(redMask_copy, "gray")
 
 
+img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
+f = plt.figure()
+f.suptitle('positions of colors')
+plt.imshow(img) 
+
+plt.show()
